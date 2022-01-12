@@ -28,6 +28,14 @@ app.use(express.json())
 
 //ROUTES
 
+app.get('/photos/:id',async (req,res)=>{
+  const photo = await Photo.findById(req.params.id)
+  res.render('photo',{
+    photo
+  })
+});
+
+
 app.get('/',async (req,res)=>{
   const photos = await Photo.find({})
   res.render('index',{
