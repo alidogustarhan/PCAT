@@ -1,64 +1,47 @@
 const express = require('express');
 const mongoose = require('mongoose');
+const fileUpload = require('express-fileupload');
+const fs = require('fs');
 const res = require('express/lib/response');
 const ejs=require('ejs');
 const path = require('path');
 const Photo = require('./models/Photo');
-
-
+const methodOverride = require('method-override');
+const photoController = require('./controllers/photoControllers');
+const pageController = require('./controllers/pageController');
 
 const app = express();
 
 //connect DB
 mongoose.connect('mongodb://localhost:27017/pcat-test-db');
 
-
-
 //TEMPLATE ENGINE
 app.set("view engine","ejs");
 //Burada temlate engıne olarak ejs kullanacagımızı belirtiyouz.
-
-
 
 //MIDDLEWARE
 
 app.use(express.static('public'));
 app.use(express.urlencoded({extended:true}))
 app.use(express.json())
-
-//ROUTES
-
-app.get('/photos/:id',async (req,res)=>{
-  const photo = await Photo.findById(req.params.id)
-  res.render('photo',{
-    photo
-  })
-});
+app.use(fileUpload());
+app.use(methodOverride('_method',{
+  methods:['POST','GET']
+}));
 
 
-app.get('/',async (req,res)=>{
-  const photos = await Photo.find({})
-  res.render('index',{
-    photos
-  });
-});
+//ROUTES (PHOTO)
+app.get('/', photoController.getAllPhotos);
+app.get('/photos/:id',photoController.getPhoto);
+app.put('/photos/:id',photoController.updatePhoto);
+app.post('/photos', photoController.createPhoto );
+app.delete('/photos/:id',photoController.deletePhoto);
 
-app.get('/about',(req,res)=>{
-  // res.sendFile(path.resolve(__dirname,'temp/index.html'));
-  res.render('about')
-})
+//ROUTES (PAGE)
+app.get('/about', pageController.getAboutPage);
+app.get('/add',pageController.getAddPage);
+app.get('/photos/edit/:id', pageController.getEditPage);
 
-
-app.get('/add',(req,res)=>{
-  // res.sendFile(path.resolve(__dirname,'temp/index.html'));
-  res.render('add')
-})
-
-app.post('/photos', (req,res)=>{
-   Photo.create(req.body)
-  res.redirect('/');
-  
-});
 
 const port=3000;
 app.listen(port,()=>{
